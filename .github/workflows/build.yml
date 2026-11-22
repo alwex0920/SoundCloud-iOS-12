@@ -5,7 +5,7 @@ jobs:
   build:
     runs-on: macos-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4  # Обновлено с v3 до v4
 
     - name: Select Xcode version
       run: sudo xcode-select -s /Applications/Xcode_13.4.app
@@ -35,7 +35,7 @@ jobs:
         zip -r SoundCloudApp.ipa Payload
 
     - name: Upload IPA
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4  # Обновлено с v3 до v4
       with:
         name: SoundCloudApp-unsigned
         path: SoundCloudApp.ipa
