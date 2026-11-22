@@ -20,7 +20,7 @@ window.onerror = function(message, source, lineno, colno, error) {
 
 // ВАЖНО: Используем HTTP, если HTTPS с самоподписанным сертификатом блокируется
 // Попробуй http://, если сейчас стоит https://
-const API_BASE = "https://95.81.95.42/api"; 
+const API_BASE = "/api"; 
 const searchInput = document.getElementById('searchInput');
 const trackList = document.getElementById('trackList');
 const player = document.getElementById('player');
