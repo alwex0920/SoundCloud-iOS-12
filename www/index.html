@@ -7,6 +7,11 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <!-- Контейнер для вывода ошибок (по умолчанию скрыт) -->
+    <div id="errorConsole" style="display: none; position: fixed; top: 0; left: 0; right: 0; background: rgba(255, 0, 0, 0.9); color: white; padding: 15px; z-index: 9999; font-family: monospace; font-size: 12px; word-wrap: break-word;">
+        <strong>ОШИБКА:</strong> <span id="errorText"></span>
+        <button onclick="document.getElementById('errorConsole').style.display='none'" style="float: right; background: white; color: red; border: none; border-radius: 5px; padding: 2px 5px; margin-top: -2px;">X</button>
+    </div>
     <!-- Фоновые свечения (как на скриншотах) -->
     <div class="glow-top"></div>
     <div class="glow-bottom"></div>
