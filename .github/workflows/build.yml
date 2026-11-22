@@ -3,7 +3,7 @@ on: [push]
 
 jobs:
   build:
-    runs-on: macos-latest
+    runs-on: macos-15
     steps:
     - uses: actions/checkout@v4  # Обновлено с v3 до v4
 
