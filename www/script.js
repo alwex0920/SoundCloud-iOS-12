@@ -1,5 +1,25 @@
-// ВАЖНО: Используем IP твоего сервера. 
-// Если у тебя настроен HTTPS с самоподписанным сертификатом, iOS может блокировать запросы.
+// Функция для вывода ошибок на экран
+function showError(message) {
+    console.error(message);
+    const errorConsole = document.getElementById('errorConsole');
+    const errorText = document.getElementById('errorText');
+    
+    if (errorConsole && errorText) {
+        errorText.innerText += message + "\n";
+        errorConsole.style.display = 'block';
+    } else {
+        alert("Критическая ошибка JS: " + message);
+    }
+}
+
+// Перехватываем все ошибки JavaScript
+window.onerror = function(message, source, lineno, colno, error) {
+    showError(`JS Error: ${message} (Line: ${lineno})`);
+    return false;
+};
+
+// ВАЖНО: Используем HTTP, если HTTPS с самоподписанным сертификатом блокируется
+// Попробуй http://, если сейчас стоит https://
 const API_BASE = "https://95.81.95.42/api"; 
 const searchInput = document.getElementById('searchInput');
 const trackList = document.getElementById('trackList');
@@ -7,7 +27,6 @@ const player = document.getElementById('player');
 const audioPlayer = document.getElementById('audioPlayer');
 const playPauseBtn = document.getElementById('playPauseBtn');
 
-// Поиск по нажатию на Enter
 searchInput.addEventListener('keypress', function (e) {
     if (e.key === 'Enter') {
         e.preventDefault();
@@ -23,19 +42,28 @@ async function performSearch() {
     trackList.innerHTML = '<div class="loading-text">Ищем треки...</div>';
 
     try {
-        const response = await fetch(`${API_BASE}/search?q=${encodeURIComponent(query)}`);
+        const url = `${API_BASE}/search?q=${encodeURIComponent(query)}`;
+        console.log("Отправка запроса на:", url);
+        
+        const response = await fetch(url);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP Error: ${response.status} ${response.statusText}`);
+        }
+        
         const data = await response.json();
         
         if (data.error) {
-            trackList.innerHTML = `<div class="loading-text" style="color: #ff5555;">Ошибка сервера: ${data.error}</div>`;
+            showError(`Ошибка от сервера: ${data.error}`);
+            trackList.innerHTML = `<div class="loading-text" style="color: #ff5555;">Ошибка сервера</div>`;
             return;
         }
         
         renderTracks(data.collection);
     } catch (error) {
-        console.error(error);
-        // Если fetch падает, скорее всего это проблема с сертификатом HTTPS
-        trackList.innerHTML = '<div class="loading-text" style="color: #ff5555;">Ошибка сети. Проверь сервер.</div>';
+        // ВЫВОДИМ ОШИБКУ НА ЭКРАН
+        showError(`Ошибка сети: ${error.message}. Проверь, доступен ли сервер ${API_BASE}`);
+        trackList.innerHTML = '<div class="loading-text" style="color: #ff5555;">Ошибка загрузки данных.<br>Смотри красный баннер сверху.</div>';
     }
 }
 
