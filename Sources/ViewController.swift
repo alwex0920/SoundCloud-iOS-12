@@ -1,15 +1,14 @@
 import UIKit
+import AVFoundation
 
 class ViewController: UIViewController, UITableViewDataSource, UITableViewDelegate, UISearchBarDelegate {
     
     let searchBar = UISearchBar()
     let tableView = UITableView()
     
-    var tracks: [[String: Any]] = []
+    var tracks: [Track] = []
+    var audioPlayer: AVPlayer?
     
-    // IP твоего сервера
-    let baseURL = "https://95.81.95.42/api"
-
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .white
@@ -18,10 +17,10 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
     
     func setupUI() {
         searchBar.delegate = self
-        searchBar.placeholder = "Поиск треков..."
+        searchBar.placeholder = "Поиск (например: Daft Punk)"
         tableView.dataSource = self
         tableView.delegate = self
-        tableView.register(UITableViewCell.self, forCellReuseIdentifier: "cell")
+        tableView.register(TrackCell.self, forCellReuseIdentifier: "TrackCell")
         
         searchBar.translatesAutoresizingMaskIntoConstraints = false
         tableView.translatesAutoresizingMaskIntoConstraints = false
@@ -41,51 +40,71 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
         ])
     }
     
-    // MARK: - Поиск
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
         searchBar.resignFirstResponder()
         guard let query = searchBar.text, !query.isEmpty else { return }
-        fetchTracks(query: query)
-    }
-    
-    func fetchTracks(query: String) {
-        let urlString = "\(baseURL)/search?q=\(query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")"
-        guard let url = URL(string: urlString) else { return }
         
-        let task = URLSession.shared.dataTask(with: url) { [weak self] data, response, error in
-            guard let data = data, error == nil else {
-                print("Ошибка сети: \(error?.localizedDescription ?? "Unknown")")
-                return
-            }
-            
-            do {
-                if let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any],
-                   let collection = json["collection"] as? [[String: Any]] {
-                    DispatchQueue.main.async {
-                        self?.tracks = collection
-                        self?.tableView.reloadData()
-                    }
+        APIClient.shared.searchTracks(query: query) { [weak self] result in
+            DispatchQueue.main.async {
+                switch result {
+                case .success(let fetchedTracks):
+                    self?.tracks = fetchedTracks
+                    self?.tableView.reloadData()
+                case .failure(let error):
+                    print("Ошибка поиска: \(error)")
                 }
-            } catch {
-                print("Ошибка парсинга JSON: \(error)")
             }
         }
-        task.resume()
     }
     
-    // MARK: - UITableView
+    // MARK: - TableView
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return tracks.count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "cell", for: indexPath)
+        let cell = tableView.dequeueReusableCell(withIdentifier: "TrackCell", for: indexPath) as! TrackCell
         let track = tracks[indexPath.row]
-        let title = track["title"] as? String ?? "Unknown"
-        let user = track["user"] as? String ?? "Unknown"
         
-        cell.textLabel?.text = "\(title) - \(user)"
-        cell.textLabel?.numberOfLines = 2
+        cell.titleLabel.text = track.title
+        cell.artistLabel.text = track.user
+        
+        // Простая асинхронная загрузка обложки
+        if let artworkUrlString = track.artworkUrl, let url = URL(string: artworkUrlString) {
+            URLSession.shared.dataTask(with: url) { data, _, _ in
+                if let data = data, let image = UIImage(data: data) {
+                    DispatchQueue.main.async {
+                        // Проверяем, что ячейка еще показывает этот трек
+                        if tableView.indexPath(for: cell) == indexPath {
+                            cell.artworkImageView.image = image
+                        }
+                    }
+                }
+            }.resume()
+        } else {
+            cell.artworkImageView.image = nil
+        }
+        
         return cell
+    }
+    
+    // MARK: - Воспроизведение
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        tableView.deselectRow(at: indexPath, animated: true)
+        let track = tracks[indexPath.row]
+        
+        APIClient.shared.getStreamURL(trackId: track.id) { [weak self] streamUrlString in
+            guard let streamUrlString = streamUrlString, let url = URL(string: streamUrlString) else {
+                print("Не удалось получить ссылку на стрим")
+                return
+            }
+            
+            DispatchQueue.main.async {
+                // Настраиваем аудио-плеер
+                self?.audioPlayer = AVPlayer(url: url)
+                self?.audioPlayer?.play()
+                print("Играет: \(track.title)")
+            }
+        }
     }
 }
