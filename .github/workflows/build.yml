@@ -1,0 +1,41 @@
+name: Build iOS App
+on: [push]
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Select Xcode version
+      run: sudo xcode-select -s /Applications/Xcode_13.4.app
+      # Xcode 13.4 поддерживает сборку под iOS 12
+
+    - name: Install XcodeGen
+      run: brew install xcodegen
+
+    - name: Generate Xcode Project
+      run: xcodegen generate
+
+    - name: Build App (No Code Sign)
+      run: |
+        xcodebuild -project SoundCloudApp.xcodeproj \
+          -scheme SoundCloudApp \
+          -sdk iphoneos \
+          -configuration Release \
+          CODE_SIGN_IDENTITY="" \
+          CODE_SIGNING_REQUIRED=NO \
+          CODE_SIGNING_ALLOWED=NO \
+          build
+
+    - name: Package Artifact
+      run: |
+        mkdir Payload
+        cp -r build/Release-iphoneos/SoundCloudApp.app Payload/
+        zip -r SoundCloudApp.ipa Payload
+
+    - name: Upload IPA
+      uses: actions/upload-artifact@v3
+      with:
+        name: SoundCloudApp-unsigned
+        path: SoundCloudApp.ipa
