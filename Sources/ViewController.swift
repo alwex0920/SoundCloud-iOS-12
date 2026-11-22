@@ -122,7 +122,11 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
                 }.resume()
             }
         } else {
-            cell.artworkImageView.image = UIImage(systemName: "music.note")
+            if #available(iOS 13.0, *) {
+                cell.artworkImageView.image = UIImage(systemName: "music.note")
+            } else {
+                cell.artworkImageView.image = nil // Для iOS 12 просто оставляем серый фон
+            }
             cell.artworkImageView.tintColor = .lightGray
             cell.artworkImageView.contentMode = .center
         }
