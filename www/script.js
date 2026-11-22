@@ -1,133 +1,183 @@
-// Функция для вывода ошибок на экран
-function showError(message) {
-    console.error(message);
-    const errorConsole = document.getElementById('errorConsole');
-    const errorText = document.getElementById('errorText');
-    
-    if (errorConsole && errorText) {
-        errorText.innerText += message + "\n";
-        errorConsole.style.display = 'block';
-    } else {
-        alert("Критическая ошибка JS: " + message);
-    }
-}
-
-// Перехватываем все ошибки JavaScript
-window.onerror = function(message, source, lineno, colno, error) {
-    showError(`JS Error: ${message} (Line: ${lineno})`);
-    return false;
-};
-
-// ВАЖНО: Используем HTTP, если HTTPS с самоподписанным сертификатом блокируется
-// Попробуй http://, если сейчас стоит https://
+// В самом верху файла
 const API_BASE = "/api"; 
 const searchInput = document.getElementById('searchInput');
 const trackList = document.getElementById('trackList');
-const player = document.getElementById('player');
 const audioPlayer = document.getElementById('audioPlayer');
-const playPauseBtn = document.getElementById('playPauseBtn');
 
+// Элементы мини-плеера
+const miniPlayer = document.getElementById('miniPlayer');
+const miniTitle = document.getElementById('miniTitle');
+const miniArtist = document.getElementById('miniArtist');
+const miniArtwork = document.getElementById('miniArtwork');
+const miniPlayPause = document.getElementById('miniPlayPause');
+const loadingPercent = document.getElementById('loadingPercent');
+
+// Элементы большого плеера
+const fullPlayer = document.getElementById('fullPlayer');
+const fullTitle = document.getElementById('fullTitle');
+const fullArtist = document.getElementById('fullArtist');
+const fullArtwork = document.getElementById('fullArtwork');
+const fullPlayPause = document.getElementById('fullPlayPause');
+const playerBg = document.getElementById('playerBg');
+const seekBar = document.getElementById('seekBar');
+const currentTimeEl = document.getElementById('currentTime');
+const totalTimeEl = document.getElementById('totalTime');
+const closePlayerBtn = document.getElementById('closePlayer');
+
+function showError(message) {
+    const consoleEl = document.getElementById('errorConsole');
+    document.getElementById('errorText').innerText = message;
+    consoleEl.style.display = 'block';
+}
+window.onerror = function(m, s, l, c, e) { showError(m + " (Line: " + l + ")"); return false; };
+
+// ПОИСК
 searchInput.addEventListener('keypress', function (e) {
-    if (e.key === 'Enter') {
-        e.preventDefault();
-        performSearch();
-    }
+    if (e.key === 'Enter') { e.preventDefault(); performSearch(); }
 });
 
 async function performSearch() {
     const query = searchInput.value.trim();
     if (!query) return;
-
     searchInput.blur(); 
-    trackList.innerHTML = '<div class="loading-text">Ищем треки...</div>';
-
+    trackList.innerHTML = '<div style="text-align:center; padding: 20px;">Ищем...</div>';
     try {
-        const url = `${API_BASE}/search?q=${encodeURIComponent(query)}`;
-        console.log("Отправка запроса на:", url);
-        
-        const response = await fetch(url);
-        
-        if (!response.ok) {
-            throw new Error(`HTTP Error: ${response.status} ${response.statusText}`);
-        }
-        
+        const response = await fetch(`${API_BASE}/search?q=${encodeURIComponent(query)}`);
         const data = await response.json();
-        
-        if (data.error) {
-            showError(`Ошибка от сервера: ${data.error}`);
-            trackList.innerHTML = `<div class="loading-text" style="color: #ff5555;">Ошибка сервера</div>`;
-            return;
-        }
-        
         renderTracks(data.collection);
     } catch (error) {
-        // ВЫВОДИМ ОШИБКУ НА ЭКРАН
-        showError(`Ошибка сети: ${error.message}. Проверь, доступен ли сервер ${API_BASE}`);
-        trackList.innerHTML = '<div class="loading-text" style="color: #ff5555;">Ошибка загрузки данных.<br>Смотри красный баннер сверху.</div>';
+        showError(`Ошибка сети: ${error.message}`);
+        trackList.innerHTML = '<div style="color: red; text-align:center;">Ошибка загрузки</div>';
     }
 }
 
 function renderTracks(tracks) {
     trackList.innerHTML = '';
-    if (!tracks || tracks.length === 0) {
-        trackList.innerHTML = '<div class="loading-text">Ничего не найдено</div>';
-        return;
-    }
-
+    if (!tracks || tracks.length === 0) return;
     tracks.forEach(track => {
         const item = document.createElement('div');
         item.className = 'track-item';
-        
-        // Меняем размер обложки на маленький для быстрой загрузки
-        const artworkUrl = track.artwork_url ? track.artwork_url.replace('-large', '-t200x200') : '';
-        
+        const artworkUrl = track.artwork_url ? track.artwork_url.replace('-large', '-t200x200') : 'https://via.placeholder.com/56/282828/FFFFFF?text=🎵';
         item.innerHTML = `
-            <img class="track-artwork" src="${artworkUrl}" onerror="this.src='https://via.placeholder.com/56/282828/FFFFFF?text=🎵'">
+            <img class="track-artwork" src="${artworkUrl}">
             <div class="track-info">
                 <div class="track-title">${track.title}</div>
                 <div class="track-artist">${track.user}</div>
             </div>
         `;
-        
         item.addEventListener('click', () => playTrack(track, artworkUrl));
         trackList.appendChild(item);
     });
 }
 
-async function playTrack(track, artworkUrl) {
-    player.classList.remove('hidden');
-    document.getElementById('playerTitle').textContent = track.title;
-    document.getElementById('playerArtist').textContent = track.user;
-    
-    if (artworkUrl) {
-        document.getElementById('playerArtwork').src = artworkUrl;
-    }
+// ВОСПРОИЗВЕДЕНИЕ И ЗАГРУЗКА
+let currentTrack = null;
 
+async function playTrack(track, artworkUrl) {
+    currentTrack = track;
+    
+    // Обновляем UI
+    miniPlayer.classList.remove('hidden');
+    miniTitle.textContent = track.title;
+    miniArtist.textContent = track.user;
+    miniArtwork.src = artworkUrl;
+    
+    fullTitle.textContent = track.title;
+    fullArtist.textContent = track.user;
+    fullArtwork.src = artworkUrl;
+    playerBg.style.backgroundImage = `url(${artworkUrl})`;
+
+    // Включаем режим загрузки
+    miniPlayer.classList.add('loading');
+    loadingPercent.textContent = '0%';
+    miniPlayPause.textContent = '⏳';
+    
     try {
         const response = await fetch(`${API_BASE}/stream/${track.id}`);
         const data = await response.json();
         
         if (data.url) {
             audioPlayer.src = data.url;
-            audioPlayer.play().then(() => {
-                playPauseBtn.textContent = '⏸';
-            }).catch(e => console.log("Ошибка автовоспроизведения:", e));
+            audioPlayer.load();
+            // Пытаемся играть (загрузка пойдет в фоне)
+            audioPlayer.play().catch(e => console.log("Autoplay prevented:", e));
         }
     } catch (error) {
-        console.error("Ошибка стриминга:", error);
+        showError("Ошибка стриминга: " + error.message);
     }
 }
 
-playPauseBtn.addEventListener('click', () => {
+// Отслеживаем прогресс загрузки (буферизацию)
+audioPlayer.addEventListener('progress', () => {
+    if (audioPlayer.buffered.length > 0 && audioPlayer.duration) {
+        const bufferedEnd = audioPlayer.buffered.end(audioPlayer.buffered.length - 1);
+        const percent = Math.round((bufferedEnd / audioPlayer.duration) * 100);
+        loadingPercent.textContent = percent + '%';
+        
+        // Если загрузилось больше 10% или полностью, можно разрешить играть
+        if (percent > 10) {
+            miniPlayer.classList.remove('loading');
+            miniPlayPause.textContent = audioPlayer.paused ? '▶️' : '⏸';
+        }
+    }
+});
+
+audioPlayer.addEventListener('canplay', () => {
+    miniPlayer.classList.remove('loading');
+    miniPlayPause.textContent = '⏸';
+    fullPlayPause.textContent = '⏸';
+});
+
+audioPlayer.addEventListener('waiting', () => {
+    miniPlayer.classList.add('loading');
+    miniPlayPause.textContent = '⏳';
+});
+
+// Синхронизация кнопок Play/Pause
+function togglePlay() {
     if (audioPlayer.paused) {
         audioPlayer.play();
-        playPauseBtn.textContent = '⏸';
+        miniPlayPause.textContent = '⏸';
+        fullPlayPause.textContent = '⏸';
     } else {
         audioPlayer.pause();
-        playPauseBtn.textContent = '▶️';
+        miniPlayPause.textContent = '▶️';
+        fullPlayPause.textContent = '▶️';
+    }
+}
+miniPlayPause.addEventListener('click', (e) => { e.stopPropagation(); togglePlay(); });
+fullPlayPause.addEventListener('click', togglePlay);
+
+// Открытие/закрытие большого плеера
+miniPlayer.addEventListener('click', () => fullPlayer.classList.add('active'));
+closePlayerBtn.addEventListener('click', () => fullPlayer.classList.remove('active'));
+
+// Синхронизация времени и ползунка
+audioPlayer.addEventListener('timeupdate', () => {
+    if (!audioPlayer.duration) return;
+    
+    // Обновляем ползунок
+    seekBar.value = (audioPlayer.currentTime / audioPlayer.duration) * 100;
+    
+    // Обновляем время
+    const curMins = Math.floor(audioPlayer.currentTime / 60);
+    const curSecs = Math.floor(audioPlayer.currentTime % 60);
+    currentTimeEl.textContent = `${curMins}:${curSecs < 10 ? '0' : ''}${curSecs}`;
+    
+    const remTime = audioPlayer.duration - audioPlayer.currentTime;
+    const remMins = Math.floor(remTime / 60);
+    const remSecs = Math.floor(remTime % 60);
+    totalTimeEl.textContent = `-${remMins}:${remSecs < 10 ? '0' : ''}${remSecs}`;
+});
+
+// Перемотка через ползунок
+seekBar.addEventListener('input', () => {
+    if (audioPlayer.duration) {
+        audioPlayer.currentTime = (seekBar.value / 100) * audioPlayer.duration;
     }
 });
 
 audioPlayer.addEventListener('ended', () => {
-    playPauseBtn.textContent = '▶️';
+    miniPlayPause.textContent = '▶️';
+    fullPlayPause.textContent = '▶️';
 });
