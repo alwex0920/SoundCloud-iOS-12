@@ -12,6 +12,11 @@ class ViewController: UIViewController, WKNavigationDelegate {
         config.allowsInlineMediaPlayback = true
         config.mediaTypesRequiringUserActionForPlayback = []
         
+        // --- ГЛАВНЫЙ ФИКС ДЛЯ CORS НА iOS 12 ---
+        // Разрешаем локальному файлу делать запросы к внешним серверам
+        config.setValue(true, forKey: "allowUniversalAccessFromFileURLs")
+        config.setValue(true, forKey: "allowFileAccessFromFileURLs")
+        
         webView = WKWebView(frame: view.bounds, configuration: config)
         webView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         webView.navigationDelegate = self
@@ -62,7 +67,7 @@ class ViewController: UIViewController, WKNavigationDelegate {
         webView.evaluateJavaScript(js, completionHandler: nil)
     }
     
-    // Доверие самоподписанному сертификату
+    // Доверие самоподписанному сертификату (чтобы запросы к серверу не блокировались)
     func webView(_ webView: WKWebView, didReceive challenge: URLAuthenticationChallenge, completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
         if challenge.protectionSpace.authenticationMethod == NSURLAuthenticationMethodServerTrust {
             if let serverTrust = challenge.protectionSpace.serverTrust {
