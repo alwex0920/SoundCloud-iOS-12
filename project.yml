@@ -7,7 +7,10 @@ targets:
   SoundCloudApp:
     type: application
     platform: iOS
-    sources: [Sources]
+    sources: 
+      - path: Sources
+      - path: www
+        type: folder # <--- Важно указать, что это папка с ресурсами
     settings:
       base:
         INFOPLIST_FILE: Sources/Info.plist
