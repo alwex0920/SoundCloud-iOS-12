@@ -1,0 +1,147 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+body {
+    background-color: #121212;
+    color: #ffffff;
+    padding-bottom: 80px; /* Отступ для плеера */
+}
+
+.header {
+    position: sticky;
+    top: 0;
+    background-color: #121212;
+    padding: 15px;
+    display: flex;
+    gap: 10px;
+    z-index: 10;
+    border-bottom: 1px solid #282828;
+}
+
+#searchInput {
+    flex: 1;
+    padding: 10px;
+    border-radius: 8px;
+    border: none;
+    background-color: #282828;
+    color: white;
+    font-size: 16px;
+}
+
+#searchInput:focus {
+    outline: none;
+    background-color: #333;
+}
+
+#searchBtn {
+    padding: 10px 15px;
+    border-radius: 8px;
+    border: none;
+    background-color: #ff5500; /* Цвет SoundCloud */
+    color: white;
+    font-weight: bold;
+    font-size: 16px;
+}
+
+.track-list {
+    padding: 10px;
+}
+
+.track-item {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    border-bottom: 1px solid #282828;
+    cursor: pointer;
+}
+
+.track-item:active {
+    background-color: #1e1e1e;
+}
+
+.track-artwork {
+    width: 50px;
+    height: 50px;
+    border-radius: 6px;
+    background-color: #333;
+    object-fit: cover;
+    margin-right: 15px;
+}
+
+.track-info {
+    flex: 1;
+    overflow: hidden;
+}
+
+.track-title {
+    font-size: 15px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.track-artist {
+    font-size: 13px;
+    color: #b3b3b3;
+    margin-top: 4px;
+}
+
+/* Плеер */
+.player {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 70px;
+    background-color: #282828;
+    display: flex;
+    align-items: center;
+    padding: 0 15px;
+    border-top: 1px solid #333;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.5);
+    transition: transform 0.3s ease;
+}
+
+.player.hidden {
+    transform: translateY(100%);
+}
+
+.player-artwork {
+    width: 45px;
+    height: 45px;
+    border-radius: 4px;
+    background-color: #121212;
+    margin-right: 12px;
+}
+
+.player-info {
+    flex: 1;
+    overflow: hidden;
+}
+
+.player-title {
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.player-artist {
+    font-size: 12px;
+    color: #b3b3b3;
+}
+
+.play-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 10px;
+}
