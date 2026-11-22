@@ -12,11 +12,6 @@ class ViewController: UIViewController, WKNavigationDelegate {
         config.allowsInlineMediaPlayback = true
         config.mediaTypesRequiringUserActionForPlayback = []
         
-        // --- ГЛАВНЫЙ ФИКС ДЛЯ CORS НА iOS 12 ---
-        // Разрешаем локальному файлу делать запросы к внешним серверам
-        config.setValue(true, forKey: "allowUniversalAccessFromFileURLs")
-        config.setValue(true, forKey: "allowFileAccessFromFileURLs")
-        
         webView = WKWebView(frame: view.bounds, configuration: config)
         webView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         webView.navigationDelegate = self
@@ -26,30 +21,32 @@ class ViewController: UIViewController, WKNavigationDelegate {
         
         view.addSubview(webView)
         
-        // Проверяем наличие папки www
+        // Загружаем локальные файлы
         guard let wwwPath = Bundle.main.path(forResource: "www", ofType: nil) else {
-            showNativeError("Ошибка: папка 'www' не найдена в бандле приложения.")
+            showNativeError("Ошибка: папка 'www' не найдена в бандле.")
             return
         }
         let wwwURL = URL(fileURLWithPath: wwwPath)
-        let indexPath = wwwURL.appendingPathComponent("index.html")
         
-        // Проверяем наличие index.html
-        if !FileManager.default.fileExists(atPath: indexPath.path) {
-            showNativeError("Ошибка: файл 'index.html' не найден по пути: \(indexPath.path)")
-            return
-        }
-        
-        // Загружаем HTML
         do {
-            let htmlString = try String(contentsOf: indexPath, encoding: .utf8)
-            webView.loadHTMLString(htmlString, baseURL: wwwURL)
+            // 1. Читаем все три файла
+            var htmlString = try String(contentsOf: wwwURL.appendingPathComponent("index.html"), encoding: .utf8)
+            let cssString = try String(contentsOf: wwwURL.appendingPathComponent("style.css"), encoding: .utf8)
+            let jsString = try String(contentsOf: wwwURL.appendingPathComponent("script.js"), encoding: .utf8)
+            
+            // 2. Вшиваем CSS и JS прямо в HTML
+            htmlString = htmlString.replacingOccurrences(of: "<link rel=\"stylesheet\" href=\"style.css\">", with: "<style>\n\(cssString)\n</style>")
+            htmlString = htmlString.replacingOccurrences(of: "<script src=\"script.js\"></script>", with: "<script>\n\(jsString)\n</script>")
+            
+            // 3. ГЛАВНЫЙ ТРЮК: Указываем фейковый адрес сервера, чтобы обойти CORS
+            let fakeServerURL = URL(string: "https://95.81.95.42/")!
+            webView.loadHTMLString(htmlString, baseURL: fakeServerURL)
+            
         } catch {
-            showNativeError("Ошибка чтения index.html: \(error.localizedDescription)")
+            showNativeError("Ошибка чтения локальных файлов: \(error.localizedDescription)")
         }
     }
     
-    // Вывод нативной ошибки, если WebView вообще не загрузился
     func showNativeError(_ message: String) {
         let errorLabel = UILabel()
         errorLabel.text = "CRITICAL ERROR:\n\n" + message
@@ -61,13 +58,12 @@ class ViewController: UIViewController, WKNavigationDelegate {
         view.addSubview(errorLabel)
     }
     
-    // Если WebView упал во время загрузки страницы
     func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
-        let js = "showError('Ошибка загрузки WebView: \(error.localizedDescription.replacingOccurrences(of: "'", with: "\\'"))');"
+        let js = "showError('Ошибка WebView: \(error.localizedDescription.replacingOccurrences(of: "'", with: "\\'"))');"
         webView.evaluateJavaScript(js, completionHandler: nil)
     }
     
-    // Доверие самоподписанному сертификату (чтобы запросы к серверу не блокировались)
+    // Разрешаем подключение к серверу с самоподписанным сертификатом
     func webView(_ webView: WKWebView, didReceive challenge: URLAuthenticationChallenge, completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
         if challenge.protectionSpace.authenticationMethod == NSURLAuthenticationMethodServerTrust {
             if let serverTrust = challenge.protectionSpace.serverTrust {
