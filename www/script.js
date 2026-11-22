@@ -91,19 +91,38 @@ async function playTrack(track, artworkUrl) {
     miniPlayer.classList.add('loading');
     loadingPercent.textContent = '0%';
     miniPlayPause.textContent = '⏳';
+    fullPlayPause.textContent = '⏳';
     
     try {
         const response = await fetch(`${API_BASE}/stream/${track.id}`);
+        
+        // ПРОВЕРКА НА ОШИБКУ 404
+        if (!response.ok) {
+            throw new Error(`Сервер не смог получить ссылку (Код: ${response.status})`);
+        }
+        
         const data = await response.json();
         
         if (data.url) {
             audioPlayer.src = data.url;
             audioPlayer.load();
-            // Пытаемся играть (загрузка пойдет в фоне)
             audioPlayer.play().catch(e => console.log("Autoplay prevented:", e));
+        } else {
+            throw new Error(data.error || "Нет ссылки на аудио");
         }
     } catch (error) {
-        showError("Ошибка стриминга: " + error.message);
+        // Если произошла ошибка — показываем её и сбрасываем плеер
+        showError("Ошибка воспроизведения: " + error.message);
+        
+        miniPlayer.classList.remove('loading');
+        miniPlayPause.textContent = '❌';
+        fullPlayPause.textContent = '❌';
+        
+        // Если трек не удалось загрузить, через 2 секунды вернем кнопку Play
+        setTimeout(() => {
+            miniPlayPause.textContent = '▶️';
+            fullPlayPause.textContent = '▶️';
+        }, 2000);
     }
 }
 
