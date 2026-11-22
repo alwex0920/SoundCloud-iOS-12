@@ -1,0 +1,14 @@
+name: SoundCloudApp
+options:
+  bundleIdPrefix: com.alwex
+  deploymentTarget:
+    iOS: "12.0"
+targets:
+  SoundCloudApp:
+    type: application
+    platform: iOS
+    sources: [Sources]
+    settings:
+      base:
+        INFOPLIST_FILE: Sources/Info.plist
+        PRODUCT_BUNDLE_IDENTIFIER: com.alwex.soundcloud
