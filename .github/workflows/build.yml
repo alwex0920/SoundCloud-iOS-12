@@ -5,7 +5,7 @@ jobs:
   build:
     runs-on: macos-latest
     steps:
-    - uses: actions/checkout@v4  # Обновлено с v3 до v4
+    - uses: actions/checkout@v4
 
     - name: Install XcodeGen
       run: brew install xcodegen
@@ -19,6 +19,7 @@ jobs:
           -scheme SoundCloudApp \
           -sdk iphoneos \
           -configuration Release \
+          -derivedDataPath build \
           CODE_SIGN_IDENTITY="" \
           CODE_SIGNING_REQUIRED=NO \
           CODE_SIGNING_ALLOWED=NO \
@@ -27,11 +28,11 @@ jobs:
     - name: Package Artifact
       run: |
         mkdir Payload
-        cp -r build/Release-iphoneos/SoundCloudApp.app Payload/
+        cp -r build/Build/Products/Release-iphoneos/SoundCloudApp.app Payload/
         zip -r SoundCloudApp.ipa Payload
 
     - name: Upload IPA
-      uses: actions/upload-artifact@v4  # Обновлено с v3 до v4
+      uses: actions/upload-artifact@v4
       with:
         name: SoundCloudApp-unsigned
         path: SoundCloudApp.ipa
