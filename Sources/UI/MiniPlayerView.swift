@@ -21,7 +21,7 @@ class MiniPlayerView: UIView {
         titleLabel.font = UIFont.systemFont(ofSize: 14, weight: .medium)
         titleLabel.numberOfLines = 1
         
-        playPauseButton.setImage(UIImage(systemName: "play.fill"), for: .normal)
+        setPlayIcon()
         playPauseButton.tintColor = .white
         playPauseButton.addTarget(self, action: #selector(togglePlayback), for: .touchUpInside)
         
@@ -45,17 +45,36 @@ class MiniPlayerView: UIView {
     func updateTrack(_ track: Track, player: AVPlayer) {
         titleLabel.text = "\(track.title) - \(track.user)"
         self.player = player
-        playPauseButton.setImage(UIImage(systemName: "pause.fill"), for: .normal)
+        setPauseIcon()
     }
     
     @objc func togglePlayback() {
         guard let player = player else { return }
         if player.timeControlStatus == .playing {
             player.pause()
-            playPauseButton.setImage(UIImage(systemName: "play.fill"), for: .normal)
+            setPlayIcon()
         } else {
             player.play()
+            setPauseIcon()
+        }
+    }
+    
+    // Хелперы для установки иконок с поддержкой iOS 12
+    func setPlayIcon() {
+        if #available(iOS 13.0, *) {
+            playPauseButton.setImage(UIImage(systemName: "play.fill"), for: .normal)
+        } else {
+            playPauseButton.setTitle("▶", for: .normal)
+            playPauseButton.titleLabel?.font = UIFont.systemFont(ofSize: 24)
+        }
+    }
+    
+    func setPauseIcon() {
+        if #available(iOS 13.0, *) {
             playPauseButton.setImage(UIImage(systemName: "pause.fill"), for: .normal)
+        } else {
+            playPauseButton.setTitle("⏸", for: .normal)
+            playPauseButton.titleLabel?.font = UIFont.systemFont(ofSize: 24)
         }
     }
 }
