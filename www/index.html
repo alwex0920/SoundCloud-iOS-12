@@ -2,35 +2,64 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SoundCloud Client</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>SoundCloud Web Client</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <!-- Фоновые свечения (как на скриншотах) -->
+    <div class="glow-top"></div>
+    <div class="glow-bottom"></div>
+
     <!-- Шапка -->
-    <div class="header">
-        <input type="text" id="searchInput" placeholder="Поиск (например: Daft Punk)">
-        <button id="searchBtn">Найти</button>
+    <header class="header">
+        <div class="header-title">
+            <span class="subtitle">ПОИСК · ЛИНЗА</span>
+            <h1>Что слушаем<br>сегодня?</h1>
+        </div>
+    </header>
+
+    <!-- Поисковая строка -->
+    <div class="search-container">
+        <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="searchInput" placeholder="Треки, артисты, плейлисты...">
+        </div>
     </div>
 
     <!-- Список треков -->
     <div id="trackList" class="track-list">
-        <!-- Сюда будут загружаться треки -->
+        <!-- Сюда рендерятся треки -->
     </div>
 
-    <!-- Мини-плеер -->
+    <!-- Плеер (появляется при клике) -->
     <div id="player" class="player hidden">
-        <img id="playerArtwork" class="player-artwork" src="" alt="Artwork">
+        <img id="playerArtwork" class="player-artwork" src="" onerror="this.src='https://via.placeholder.com/50/282828/FFFFFF?text=🎵'">
         <div class="player-info">
-            <div id="playerTitle" class="player-title">Название трека</div>
-            <div id="playerArtist" class="player-artist">Исполнитель</div>
+            <div id="playerTitle" class="player-title">Название</div>
+            <div id="playerArtist" class="player-artist">Артист</div>
         </div>
         <button id="playPauseBtn" class="play-btn">▶️</button>
     </div>
 
+    <!-- Нижнее плавающее меню -->
+    <nav class="bottom-nav">
+        <div class="nav-item">
+            <span class="nav-icon">🌊</span>
+            <span class="nav-text">Волна</span>
+        </div>
+        <div class="nav-item active">
+            <span class="nav-icon">🔍</span>
+            <span class="nav-text">Поиск</span>
+        </div>
+        <div class="nav-item">
+            <span class="nav-icon">👤</span>
+            <span class="nav-text">Я</span>
+        </div>
+    </nav>
+
     <!-- Скрытый аудио-тег -->
     <audio id="audioPlayer"></audio>
-
     <script src="script.js"></script>
 </body>
 </html>
