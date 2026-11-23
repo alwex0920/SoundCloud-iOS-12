@@ -1,7 +1,7 @@
 import UIKit
 import WebKit
 
-class ViewController: UIViewController, WKNavigationDelegate {
+class ViewController: UIViewController, WKNavigationDelegate, WKScriptMessageHandler {
     
     var webView: WKWebView!
 
@@ -12,6 +12,11 @@ class ViewController: UIViewController, WKNavigationDelegate {
         config.allowsInlineMediaPlayback = true
         config.mediaTypesRequiringUserActionForPlayback = []
         
+        // Добавляем мост для вызова входа из JS
+        let contentController = WKUserContentController()
+        contentController.add(self, name: "loginHandler")
+        config.userContentController = contentController
+        
         webView = WKWebView(frame: view.bounds, configuration: config)
         webView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         webView.navigationDelegate = self
@@ -20,50 +25,69 @@ class ViewController: UIViewController, WKNavigationDelegate {
         webView.scrollView.backgroundColor = webView.backgroundColor
         
         view.addSubview(webView)
-        
-        // Загружаем локальные файлы
-        guard let wwwPath = Bundle.main.path(forResource: "www", ofType: nil) else {
-            showNativeError("Ошибка: папка 'www' не найдена в бандле.")
-            return
-        }
+        loadLocalHTML()
+    }
+    
+    // Загрузка локального HTML с "фейковым" базовым URL для обхода CORS
+    func loadLocalHTML() {
+        guard let wwwPath = Bundle.main.path(forResource: "www", ofType: nil) else { return }
         let wwwURL = URL(fileURLWithPath: wwwPath)
         
         do {
-            // 1. Читаем все три файла
-            var htmlString = try String(contentsOf: wwwURL.appendingPathComponent("index.html"), encoding: .utf8)
-            let cssString = try String(contentsOf: wwwURL.appendingPathComponent("style.css"), encoding: .utf8)
-            let jsString = try String(contentsOf: wwwURL.appendingPathComponent("script.js"), encoding: .utf8)
+            var html = try String(contentsOf: wwwURL.appendingPathComponent("index.html"), encoding: .utf8)
+            let css = try String(contentsOf: wwwURL.appendingPathComponent("style.css"), encoding: .utf8)
+            let js = try String(contentsOf: wwwURL.appendingPathComponent("script.js"), encoding: .utf8)
             
-            // 2. Вшиваем CSS и JS прямо в HTML
-            htmlString = htmlString.replacingOccurrences(of: "<link rel=\"stylesheet\" href=\"style.css\">", with: "<style>\n\(cssString)\n</style>")
-            htmlString = htmlString.replacingOccurrences(of: "<script src=\"script.js\"></script>", with: "<script>\n\(jsString)\n</script>")
+            // Вшиваем CSS и JS прямо в HTML
+            html = html.replacingOccurrences(of: "<link rel=\"stylesheet\" href=\"style.css\">", with: "<style>\n\(css)\n</style>")
+            html = html.replacingOccurrences(of: "<script src=\"script.js\"></script>", with: "<script>\n\(js)\n</script>")
             
-            // 3. ГЛАВНЫЙ ТРЮК: Указываем фейковый адрес сервера, чтобы обойти CORS
-            let fakeServerURL = URL(string: "https://95.81.95.42/")!
-            webView.loadHTMLString(htmlString, baseURL: fakeServerURL)
-            
+            // Загружаем с базовым URL сервера
+            webView.loadHTMLString(html, baseURL: URL(string: "https://95.81.95.42/")!)
         } catch {
-            showNativeError("Ошибка чтения локальных файлов: \(error.localizedDescription)")
+            print("Ошибка загрузки файлов: \(error)")
         }
     }
     
-    func showNativeError(_ message: String) {
-        let errorLabel = UILabel()
-        errorLabel.text = "CRITICAL ERROR:\n\n" + message
-        errorLabel.textColor = .white
-        errorLabel.backgroundColor = .red
-        errorLabel.numberOfLines = 0
-        errorLabel.textAlignment = .center
-        errorLabel.frame = view.bounds
-        view.addSubview(errorLabel)
+    // Получаем команду из JS (нажатие на кнопку "Войти")
+    func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
+        if message.name == "loginHandler", let _ = message.body as? String {
+            // Открываем страницу авторизации SoundCloud
+            let authURL = "https://soundcloud.com/connect?client_id=QhVEWrrJKvW4uSU5u5EoI0FTXYUGzy5k&response_type=token&redirect_uri=sc-app://auth"
+            if let url = URL(string: authURL) {
+                webView.load(URLRequest(url: url))
+            }
+        }
     }
     
-    func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
-        let js = "showError('Ошибка WebView: \(error.localizedDescription.replacingOccurrences(of: "'", with: "\\'"))');"
-        webView.evaluateJavaScript(js, completionHandler: nil)
+    // Перехватываем редирект sc-app://auth#access_token=...
+    func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+        
+        if let url = navigationAction.request.url, url.scheme == "sc-app" {
+            decisionHandler(.cancel)
+            
+            // Вытаскиваем токен из ссылки
+            if let fragment = url.fragment {
+                let params = fragment.components(separatedBy: "&")
+                for param in params {
+                    if param.hasPrefix("access_token=") {
+                        let token = param.replacingOccurrences(of: "access_token=", with: "")
+                        
+                        // Передаем токен в JS
+                        let jsCode = "window.saveToken('\(token)');"
+                        webView.evaluateJavaScript(jsCode, completionHandler: { _, _ in
+                            // Возвращаемся на главную страницу приложения
+                            self.loadLocalHTML()
+                        })
+                        return
+                    }
+                }
+            }
+        }
+        decisionHandler(.allow)
     }
     
-    // Разрешаем подключение к серверу с самоподписанным сертификатом
+    // Разрешаем самоподписанный сертификат
     func webView(_ webView: WKWebView, didReceive challenge: URLAuthenticationChallenge, completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
         if challenge.protectionSpace.authenticationMethod == NSURLAuthenticationMethodServerTrust {
             if let serverTrust = challenge.protectionSpace.serverTrust {
