@@ -7,179 +7,89 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <!-- Консоль ошибок -->
-    <div id="errorConsole" style="display: none; position: fixed; top: 0; left: 0; right: 0; background: rgba(255, 0, 0, 0.9); color: white; padding: 15px; z-index: 9999; font-family: monospace; font-size: 12px; word-wrap: break-word;">
-        <strong>ОШИБКА:</strong> <span id="errorText"></span>
-        <button onclick="document.getElementById('errorConsole').style.display='none'" style="float: right; background: white; color: red; border: none; border-radius: 5px; padding: 2px 5px;">X</button>
-    </div>
-
-    <!-- Фоновые свечения -->
-    <div class="glow-top"></div>
-    <div class="glow-bottom"></div>
-
-    <!-- Шапка -->
-    <header class="header">
-        <div class="header-title">
-            <span class="subtitle">ПОИСК · ЛИНЗА</span>
-            <h1>Что слушаем<br>сегодня?</h1>
-        </div>
-    </header>
-
-    <!-- Поиск -->
-    <div class="search-container">
-        <div class="search-box">
-            <!-- SVG Лупа -->
-            <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="11" cy="11" r="8"></circle>
-                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-            </svg>
-            <input type="text" id="searchInput" placeholder="Треки, артисты...">
+    <!-- ЭКРАН ВХОДА -->
+    <div id="loginScreen" class="full-screen-overlay">
+        <div class="login-box">
+            <h1 style="margin-bottom: 10px;">Добро пожаловать</h1>
+            <p style="color: #999; margin-bottom: 30px; font-size: 15px;">Войдите в аккаунт SoundCloud, чтобы слушать музыку и видеть свои лайки.</p>
+            <button id="loginBtn" class="btn-primary">Войти в аккаунт</button>
         </div>
     </div>
 
-    <!-- Список треков -->
-    <div id="trackList" class="track-list"></div>
+    <!-- ГЛАВНЫЙ ЭКРАН -->
+    <div id="mainApp" class="hidden">
+        <header class="header">
+            <div class="header-title">
+                <span class="subtitle" id="pageSubtitle">ПОИСК · ЛИНЗА</span>
+                <h1 id="pageTitle">Что слушаем<br>сегодня?</h1>
+            </div>
+        </header>
 
-    <!-- МИНИ-ПЛЕЕР -->
-    <div id="miniPlayer" class="mini-player hidden">
-        <div class="mini-artwork-container">
-            <img id="miniArtwork" class="mini-artwork" src="" onerror="this.src='https://via.placeholder.com/50/282828/FFFFFF?text=🎵'">
-            <!-- Оверлей загрузки -->
-            <div id="loadingOverlay" class="loading-overlay">
-                <span id="loadingPercent">0%</span>
+        <!-- Поиск -->
+        <div id="searchContainer" class="search-container">
+            <div class="search-box">
+                <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                <input type="text" id="searchInput" placeholder="Треки, артисты...">
             </div>
         </div>
-        <div class="mini-info">
-            <div id="miniTitle" class="mini-title">Название</div>
-            <div id="miniArtist" class="mini-artist">Артист</div>
+
+        <div id="trackList" class="track-list"></div>
+
+        <!-- МИНИ-ПЛЕЕР -->
+        <div id="miniPlayer" class="mini-player hidden">
+            <div class="mini-artwork-container">
+                <img id="miniArtwork" class="mini-artwork" src="" onerror="this.src='https://via.placeholder.com/50/282828/FFFFFF?text=🎵'">
+                <div id="loadingOverlay" class="loading-overlay"><span id="loadingPercent">0%</span></div>
+            </div>
+            <div class="mini-info">
+                <div id="miniTitle" class="mini-title">Название</div>
+                <div id="miniArtist" class="mini-artist">Артист</div>
+            </div>
+            <button id="miniPlayPause" class="mini-play-btn">
+                <svg id="miniPlayIcon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+            </button>
         </div>
-        <button id="miniPlayPause" class="mini-play-btn">
-            <!-- SVG Play (по умолчанию) -->
-            <svg id="miniPlayIcon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <polygon points="5 3 19 12 5 21 5 3"></polygon>
-            </svg>
-        </button>
+
+        <!-- НИЖНЕЕ МЕНЮ (Только Поиск и Профиль) -->
+        <nav class="bottom-nav">
+            <div class="nav-item active" id="navSearch">
+                <span class="nav-icon">🔍</span><span class="nav-text">Поиск</span>
+            </div>
+            <div class="nav-item" id="navProfile">
+                <span class="nav-icon">👤</span><span class="nav-text">Я</span>
+            </div>
+        </nav>
     </div>
 
-    <!-- РАЗВЕРНУТЫЙ ПЛЕЕР (Полный экран) -->
+    <!-- РАЗВЕРНУТЫЙ ПЛЕЕР -->
     <div id="fullPlayer" class="full-player">
-        <!-- Фон (размытая обложка) -->
         <div id="playerBg" class="player-bg"></div>
-        
         <div class="full-player-content">
-            <!-- Шапка плеера -->
             <div class="full-player-header">
-                <button id="closePlayer" class="icon-btn">
-                    <!-- SVG Стрелка вниз -->
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <polyline points="6 9 12 15 18 9"></polyline>
-                    </svg>
-                </button>
-                <div class="header-text">
-                    <span class="subtitle">СЕЙЧАС ИГРАЕТ</span>
-                    <span class="queue-text">Очередь</span>
-                </div>
-                <button class="icon-btn">
-                    <!-- SVG Три точки -->
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="1"></circle>
-                        <circle cx="19" cy="12" r="1"></circle>
-                        <circle cx="5" cy="12" r="1"></circle>
-                    </svg>
-                </button>
+                <button id="closePlayer" class="icon-btn"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
+                <div class="header-text"><span class="subtitle">СЕЙЧАС ИГРАЕТ</span></div>
+                <div style="width: 40px;"></div>
             </div>
-
-            <!-- Обложка -->
-            <div class="full-artwork-container">
-                <img id="fullArtwork" class="full-artwork" src="">
-            </div>
-
-            <!-- Инфо о треке -->
+            <div class="full-artwork-container"><img id="fullArtwork" class="full-artwork" src=""></div>
             <div class="track-info-full">
                 <div class="text-container">
                     <h1 id="fullTitle" class="full-title">Название</h1>
                     <h2 id="fullArtist" class="full-artist">Артист</h2>
                 </div>
-                <!-- SVG Сердце -->
-                <button class="like-btn">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                    </svg>
-                </button>
             </div>
-
-            <!-- Время и ползунок -->
             <div class="progress-container">
-                <div class="time-labels">
-                    <span id="currentTime">0:00</span>
-                    <span id="totalTime">-0:00</span>
-                </div>
+                <div class="time-labels"><span id="currentTime">0:00</span><span id="totalTime">-0:00</span></div>
                 <input type="range" id="seekBar" class="seek-bar" value="0" min="0" max="100" step="0.1">
             </div>
-
-            <!-- Управление -->
             <div class="controls">
-                <!-- SVG Shuffle -->
-                <button class="control-btn small">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <polyline points="16 3 21 3 21 8"></polyline>
-                        <line x1="4" y1="20" x2="21" y2="3"></line>
-                        <polyline points="21 16 21 21 16 21"></polyline>
-                        <line x1="15" y1="15" x2="21" y2="21"></line>
-                        <line x1="4" y1="4" x2="9" y2="9"></line>
-                    </svg>
-                </button>
-                
-                <!-- SVG Prev -->
-                <button class="control-btn">
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
-                        <polygon points="19 20 9 12 19 4 19 20"></polygon>
-                        <line x1="5" y1="19" x2="5" y2="5" stroke="currentColor" stroke-width="2"></line>
-                    </svg>
-                </button>
-
-                <!-- Главная кнопка Play/Pause -->
+                <button id="prevBtn" class="control-btn"><svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><polygon points="19 20 9 12 19 4 19 20"></polygon><line x1="5" y1="19" x2="5" y2="5" stroke="currentColor" stroke-width="2"></line></svg></button>
                 <button id="fullPlayPause" class="control-btn play-btn-full">
-                    <svg id="fullPlayIcon" width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
-                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                    </svg>
+                    <svg id="fullPlayIcon" width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
                 </button>
-
-                <!-- SVG Next -->
-                <button class="control-btn">
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
-                        <polygon points="5 4 15 12 5 20 5 4"></polygon>
-                        <line x1="19" y1="5" x2="19" y2="19" stroke="currentColor" stroke-width="2"></line>
-                    </svg>
-                </button>
-
-                <!-- SVG Repeat -->
-                <button class="control-btn small">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <polyline points="17 1 21 5 17 9"></polyline>
-                        <path d="M3 11V9a4 4 0 0 1 4-4h14"></path>
-                        <polyline points="7 23 3 19 7 15"></polyline>
-                        <path d="M21 13v2a4 4 0 0 1-4 4H3"></path>
-                    </svg>
-                </button>
-            </div>
-            
-            <!-- Нижняя панель (заглушка) -->
-            <div class="bottom-panel">
-                <span>Текст</span>
-                <span>Радио</span>
-                <span>Эквалайзер</span>
-                <span>Не то</span>
+                <button id="nextBtn" class="control-btn"><svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 4 15 12 5 20 5 4"></polygon><line x1="19" y1="5" x2="19" y2="19" stroke="currentColor" stroke-width="2"></line></svg></button>
             </div>
         </div>
     </div>
-
-    <!-- Нижнее меню -->
-    <nav class="bottom-nav">
-        <div class="nav-item"><span class="nav-icon">🌊</span><span class="nav-text">Волна</span></div>
-        <div class="nav-item active"><span class="nav-icon">🔍</span><span class="nav-text">Поиск</span></div>
-        <div class="nav-item"><span class="nav-icon">👤</span><span class="nav-text">Я</span></div>
-    </nav>
 
     <audio id="audioPlayer"></audio>
     <script src="script.js"></script>
