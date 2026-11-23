@@ -28,7 +28,11 @@
     <!-- Поиск -->
     <div class="search-container">
         <div class="search-box">
-            <span class="search-icon">🔍</span>
+            <!-- SVG Лупа -->
+            <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
             <input type="text" id="searchInput" placeholder="Треки, артисты...">
         </div>
     </div>
@@ -49,7 +53,12 @@
             <div id="miniTitle" class="mini-title">Название</div>
             <div id="miniArtist" class="mini-artist">Артист</div>
         </div>
-        <button id="miniPlayPause" class="mini-play-btn">▶️</button>
+        <button id="miniPlayPause" class="mini-play-btn">
+            <!-- SVG Play (по умолчанию) -->
+            <svg id="miniPlayIcon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+            </svg>
+        </button>
     </div>
 
     <!-- РАЗВЕРНУТЫЙ ПЛЕЕР (Полный экран) -->
@@ -60,12 +69,24 @@
         <div class="full-player-content">
             <!-- Шапка плеера -->
             <div class="full-player-header">
-                <button id="closePlayer" class="icon-btn">⌄</button>
+                <button id="closePlayer" class="icon-btn">
+                    <!-- SVG Стрелка вниз -->
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                </button>
                 <div class="header-text">
                     <span class="subtitle">СЕЙЧАС ИГРАЕТ</span>
                     <span class="queue-text">Очередь</span>
                 </div>
-                <button class="icon-btn">⋮</button>
+                <button class="icon-btn">
+                    <!-- SVG Три точки -->
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="1"></circle>
+                        <circle cx="19" cy="12" r="1"></circle>
+                        <circle cx="5" cy="12" r="1"></circle>
+                    </svg>
+                </button>
             </div>
 
             <!-- Обложка -->
@@ -79,7 +100,12 @@
                     <h1 id="fullTitle" class="full-title">Название</h1>
                     <h2 id="fullArtist" class="full-artist">Артист</h2>
                 </div>
-                <button class="like-btn">❤</button>
+                <!-- SVG Сердце -->
+                <button class="like-btn">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                    </svg>
+                </button>
             </div>
 
             <!-- Время и ползунок -->
@@ -93,11 +119,49 @@
 
             <!-- Управление -->
             <div class="controls">
-                <button class="control-btn small">🔀</button>
-                <button class="control-btn">⏮</button>
-                <button id="fullPlayPause" class="control-btn play-btn-full">⏸</button>
-                <button class="control-btn">⏭</button>
-                <button class="control-btn small">🔁</button>
+                <!-- SVG Shuffle -->
+                <button class="control-btn small">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="16 3 21 3 21 8"></polyline>
+                        <line x1="4" y1="20" x2="21" y2="3"></line>
+                        <polyline points="21 16 21 21 16 21"></polyline>
+                        <line x1="15" y1="15" x2="21" y2="21"></line>
+                        <line x1="4" y1="4" x2="9" y2="9"></line>
+                    </svg>
+                </button>
+                
+                <!-- SVG Prev -->
+                <button class="control-btn">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+                        <polygon points="19 20 9 12 19 4 19 20"></polygon>
+                        <line x1="5" y1="19" x2="5" y2="5" stroke="currentColor" stroke-width="2"></line>
+                    </svg>
+                </button>
+
+                <!-- Главная кнопка Play/Pause -->
+                <button id="fullPlayPause" class="control-btn play-btn-full">
+                    <svg id="fullPlayIcon" width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                    </svg>
+                </button>
+
+                <!-- SVG Next -->
+                <button class="control-btn">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+                        <polygon points="5 4 15 12 5 20 5 4"></polygon>
+                        <line x1="19" y1="5" x2="19" y2="19" stroke="currentColor" stroke-width="2"></line>
+                    </svg>
+                </button>
+
+                <!-- SVG Repeat -->
+                <button class="control-btn small">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="17 1 21 5 17 9"></polyline>
+                        <path d="M3 11V9a4 4 0 0 1 4-4h14"></path>
+                        <polyline points="7 23 3 19 7 15"></polyline>
+                        <path d="M21 13v2a4 4 0 0 1-4 4H3"></path>
+                    </svg>
+                </button>
             </div>
             
             <!-- Нижняя панель (заглушка) -->
